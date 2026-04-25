@@ -1,0 +1,6 @@
+@RecyclonicApi_HostAddress = http://localhost:5147
+
+GET {{RecyclonicApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
