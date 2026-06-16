@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -122,12 +122,76 @@ namespace RecyclonicApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var result = await _ewasteService.Getallrequestforuser(userId);
+            
+            // Calculate total revenue from delivered/completed orders for this user
+            var totalRevenue = await _context.RecycleRequests
+                .Where(r => r.UserId == Guid.Parse(userId) && r.IsDelivered)
+                .SumAsync(r => r.AmountPaidToUser ?? 0);
+
             return StatusCode(result.StatusCode, new
             {
                 Message = result.Message,
                 Success = result.IsSuccess,
                 Data = result.Data,
+                TotalRevenue = totalRevenue
             });
+        }
+
+        [HttpPut("UpdateDeliveryStatus/{id}")]
+        [Authorize(Roles = "Employee,Admin")]
+        public async Task<IActionResult> UpdateDeliveryStatus(Guid id, [FromBody] UpdateDeliveryStatusDto dto)
+        {
+            var request = await _context.RecycleRequests
+                .Include(r => r.delivery)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (request == null)
+                return NotFound(new { Success = false, message = "Request not found" });
+
+            request.IsDelivered = dto.IsDelivered;
+            
+            if (dto.IsDelivered)
+            {
+                request.AmountPaidToUser = dto.AmountPaidToUser ?? request.OfferedPrice ?? 0;
+                request.AmountReceivedFromRecycler = dto.AmountReceivedFromRecycler ?? 0;
+
+                if (request.delivery != null)
+                {
+                    request.delivery.Status = "Delivered";
+                    var hasDelivered = await _context.StatusTrackings
+                        .AnyAsync(st => st.DeliveryId == request.delivery.Id && st.Status == "Delivered");
+                    if (!hasDelivered)
+                    {
+                        var newstatus = new StatusTraking()
+                        {
+                            Id = Guid.NewGuid(),
+                            Status = "Delivered",
+                            Dateofstatus = DateTime.Now,
+                            DeliveryId = request.delivery.Id
+                        };
+                        await _context.StatusTrackings.AddAsync(newstatus);
+                    }
+                }
+            }
+            else
+            {
+                request.AmountPaidToUser = null;
+                request.AmountReceivedFromRecycler = null;
+
+                if (request.delivery != null)
+                {
+                    request.delivery.Status = "Pending";
+                    var deliveredStatus = await _context.StatusTrackings
+                        .FirstOrDefaultAsync(st => st.DeliveryId == request.delivery.Id && st.Status == "Delivered");
+                    if (deliveredStatus != null)
+                    {
+                        _context.StatusTrackings.Remove(deliveredStatus);
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { Success = true, message = "Delivery status updated successfully" });
         }
 
         [HttpPut("Cancel-request")]
@@ -150,6 +214,18 @@ namespace RecyclonicApi.Controllers
         {
             var AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var result = await _ewasteService.Getallrequestforadmin(AdminId);
+            return StatusCode(result.StatusCode, new
+            {
+                Message = result.Message,
+                Success = result.IsSuccess,
+                Data = result.Data,
+            });
+        }
+        [HttpGet("GetUserRequestsForAdmin/{userId}")]
+        [Authorize(Roles = "Employee,Admin")]
+        public async Task<IActionResult> GetUserRequestsForAdmin(string userId)
+        {
+            var result = await _ewasteService.GetUserRequestsForAdmin(userId);
             return StatusCode(result.StatusCode, new
             {
                 Message = result.Message,

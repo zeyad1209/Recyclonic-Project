@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RecyclonicApi.Data;
@@ -126,14 +126,46 @@ namespace RecyclonicApi.ServiceLayers.Implementation
             request.Status = status;
             request.EmployeeId = employee.Id;
             price = price ?? 0;
-            if (status == "Accepted" && (price == null || price <= 0))
+            if ((status == "Accepted" || status == "Approved") && (price == null || price <= 0))
                 return ServiceResult.Fail("You must offer a valid price for accepted request", HttpStatusCode.BadRequest);
             request.OfferedPrice = price;
+            
+            if (status == "Accepted" || status == "Approved")
+            {
+                request.UserResponse = true;
+            }
+
             _recycleRepo.UpdateAsync(request);
             await _recycleRepo.Save();
 
-            if (status == "Accepted")
+            if (status == "Accepted" || status == "Approved")
             {
+                // Automatically create delivery record and tracking
+                var existingDelivery = await _context.Deliveries.FirstOrDefaultAsync(d => d.RecycleRequestId == request.Id);
+                if (existingDelivery == null)
+                {
+                    Delivery newdelivery = new Delivery()
+                    {
+                        Id = Guid.NewGuid(),
+                        PickUpAddress = request.Address,
+                        RecycleRequestId = request.Id,
+                        statusTraking = new List<StatusTraking>()
+                    };
+                    await _context.Deliveries.AddAsync(newdelivery);
+                    await _context.SaveChangesAsync();
+
+                    var newstatus = new StatusTraking()
+                    {
+                        Id = Guid.NewGuid(),
+                        Status = "Pending",
+                        Dateofstatus = DateTime.Now,
+                        DeliveryId = newdelivery.Id
+                    };
+                    await _context.StatusTrackings.AddAsync(newstatus);
+                    newdelivery.statusTraking.Add(newstatus);
+                    await _context.SaveChangesAsync();
+                }
+
                 var emailSubject = "Recycle Request Accepted";
                 var emailBody = $"Dear {request.user.FirstName + " " + request.user.LastName},\n\n" +
                                 $"Your recycle request for the ewaste item has been accepted.\n" +
@@ -170,7 +202,7 @@ namespace RecyclonicApi.ServiceLayers.Implementation
             var request = await _recycleRepo.GetRecycleRequestById(RequestId);
             if (request == null)
                 return ServiceResult.Fail("No Request", HttpStatusCode.NotFound);
-            if (request.Status != "Accepted")
+            if (request.Status != "Accepted" && request.Status != "Approved")
                 return ServiceResult.Fail("You don't have an access to active this request", HttpStatusCode.Forbidden);
 
             request.UserResponse = accept;
@@ -262,6 +294,21 @@ namespace RecyclonicApi.ServiceLayers.Implementation
             var mappedRequests = _mapper.Map<IEnumerable<RecycleEwasteGetDtotouser>>(requests);
 
             return ServiceResult.Ok(mappedRequests, "Requests retrieved successfully", HttpStatusCode.OK);
+        }
+        public async Task<ServiceResult> GetUserRequestsForAdmin(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return ServiceResult.Fail("UserId is required", HttpStatusCode.BadRequest);
+
+            // Reusing the repository method that gets requests for a specific userId
+            var requests = await _recycleRepo.GetRecycleRequestsforuser(Guid.Parse(userId));
+
+            if (requests == null || !requests.Any())
+                return ServiceResult.Ok(null, "No Requests found for this user.", HttpStatusCode.NotFound);
+
+            var mappedRequests = _mapper.Map<IEnumerable<RecycleEwasteGetDtotouser>>(requests);
+
+            return ServiceResult.Ok(mappedRequests, "User requests retrieved successfully", HttpStatusCode.OK);
         }
     }
 }

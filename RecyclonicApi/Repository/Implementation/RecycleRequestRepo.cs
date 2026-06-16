@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RecyclonicApi.Data;
 using RecyclonicApi.Models;
 using RecyclonicApi.Repository.Interfaces;
@@ -14,6 +14,7 @@ namespace RecyclonicApi.Repository.Implementation
         public async Task<IEnumerable<RecycleRequest>> GetAllrequeststhatnotresponding()
         {
             return await _context.RecycleRequests
+                .AsNoTracking()
                 .Include(r => r.ewasteItem)
                     .ThenInclude(e => e.ImagesUrl)
                 .Where(x => x.UserResponse != false)
@@ -37,9 +38,13 @@ namespace RecyclonicApi.Repository.Implementation
         public async Task<IEnumerable<RecycleRequest>> GetRecycleRequestsforuser(Guid Id)
         {
             var requests = await _context.RecycleRequests
+                .AsNoTracking()
                 .Include(r => r.user)
                 .Include(r => r.Employee)
                 .Include(r => r.delivery)
+                    .ThenInclude(d => d!.statusTraking)
+                .Include(r => r.delivery)
+                    .ThenInclude(d => d!.DeliveryUser)
                 .Include(r => r.ewasteItem)
                     .ThenInclude(e => e.ImagesUrl)
                 .Where(r => r.UserId == Id)
@@ -51,9 +56,13 @@ namespace RecyclonicApi.Repository.Implementation
         public async Task<IEnumerable<RecycleRequest>> GetRecycleRequestsforadmin(Guid Id)
         {
             var requests = await _context.RecycleRequests
+                .AsNoTracking()
                 .Include(r => r.user)
                 .Include(r => r.Employee)
                 .Include(r => r.delivery)
+                    .ThenInclude(d => d!.statusTraking)
+                .Include(r => r.delivery)
+                    .ThenInclude(d => d!.DeliveryUser)
                 .Include(r => r.ewasteItem)
                     .ThenInclude(e => e.ImagesUrl)
                 .ToListAsync();

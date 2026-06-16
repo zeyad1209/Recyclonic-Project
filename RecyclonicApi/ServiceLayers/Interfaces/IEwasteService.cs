@@ -12,5 +12,6 @@ namespace RecyclonicApi.ServiceLayers.Interfaces
         Task<ServiceResult> Getallrequestforuser(string UserId);
         Task<ServiceResult> Cancel_Request(string UserId, Guid RequestId);
         Task<ServiceResult> Getallrequestforadmin(string adminId);
+        Task<ServiceResult> GetUserRequestsForAdmin(string userId);
     }
 }

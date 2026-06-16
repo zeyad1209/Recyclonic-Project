@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using RecyclonicApi.Models;
 using RecyclonicApi.Models.Domain;
 using RecyclonicApi.Models.DTOs;
@@ -27,6 +27,8 @@ namespace RecyclonicApi.HelperServices
             CreateMap<RecycleRequest, RecycleEwasteGetDtotouser>()
                 .ForMember(dest => dest.Id,
                     opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.UserId,
+                    opt => opt.MapFrom(src => src.user != null ? src.user.Id.ToString() : null))
                 .ForMember(dest => dest.Images,
                     opt => opt.MapFrom(src =>
                         src.ewasteItem.ImagesUrl != null
@@ -40,10 +42,26 @@ namespace RecyclonicApi.HelperServices
                     opt => opt.MapFrom(src => src.ewasteItem.weight))
                 .ForMember(dest => dest.Address,
                     opt => opt.MapFrom(src => src.Address))
-                
+                .ForMember(dest => dest.SubmissionDate,
+                    opt => opt.MapFrom(src => src.ewasteItem.SubmissionDate))
                 .ForMember(dest => dest.EmployeeName,
                     opt => opt.MapFrom(src =>
                         src.Employee != null ? src.Employee.FirstName + " " + src.Employee.LastName : null))
+                .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src =>
+                        src.user != null ? src.user.FirstName + " " + src.user.LastName : null))
+                .ForMember(dest => dest.Email,
+                    opt => opt.MapFrom(src =>
+                        src.user != null ? src.user.Email : null))
+                .ForMember(dest => dest.PhoneNumber,
+                    opt => opt.MapFrom(src =>
+                        src.user != null ? src.user.PhoneNumber : null))
+                .ForMember(dest => dest.IsDelivered,
+                    opt => opt.MapFrom(src => src.IsDelivered))
+                .ForMember(dest => dest.AmountPaidToUser,
+                    opt => opt.MapFrom(src => src.AmountPaidToUser))
+                .ForMember(dest => dest.AmountReceivedFromRecycler,
+                    opt => opt.MapFrom(src => src.AmountReceivedFromRecycler))
             .ForMember(dest => dest.delivery,
                 opt => opt.MapFrom(src => src.delivery));
 

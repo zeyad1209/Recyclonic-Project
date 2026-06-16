@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RecyclonicApi.Models;
@@ -161,6 +161,8 @@ namespace RecyclonicApi.Data
             modelbuilder.Entity<RecycleRequest>(entity =>
             {
                 entity.Property(e => e.OfferedPrice).HasPrecision(18, 2);
+                entity.Property(e => e.AmountPaidToUser).HasPrecision(18, 2);
+                entity.Property(e => e.AmountReceivedFromRecycler).HasPrecision(18, 2);
             });
 
             modelbuilder.Entity<Transaction>(entity =>

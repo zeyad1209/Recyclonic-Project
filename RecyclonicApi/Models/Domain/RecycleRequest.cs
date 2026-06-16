@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RecyclonicApi.Models
@@ -9,6 +9,9 @@ namespace RecyclonicApi.Models
         public string Status { get; set; }
         public decimal? OfferedPrice { get; set; }
         public bool? UserResponse { get; set; }
+        public bool IsDelivered { get; set; } = false;
+        public decimal? AmountPaidToUser { get; set; }
+        public decimal? AmountReceivedFromRecycler { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         [Required]
         public string Address { get; set; }

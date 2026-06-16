@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecyclonicApi.Models.DTOs
 {
@@ -40,11 +40,12 @@ namespace RecyclonicApi.Models.DTOs
     public class RecycleEwasteGetDtotouser
     {
         public Guid Id { get; set; }
+        public string UserId { get; set; }
         public string Model { get; set; }
         public string Condition { get; set; }
         public string? Description { get; set; }
         public List<string> Images { get; set; }
-        //public DateTime SubmissionDate { get; set; }
+        public DateTime SubmissionDate { get; set; }
         public decimal Weight { get; set; }
         public string Typename { get; set; }
         public string Brandname { get; set; }
@@ -53,6 +54,12 @@ namespace RecyclonicApi.Models.DTOs
         public decimal? OfferedPrice { get; set; }
         public bool? UserResponse { get; set; }
         public string? EmployeeName { get; set; }
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public bool IsDelivered { get; set; }
+        public decimal? AmountPaidToUser { get; set; }
+        public decimal? AmountReceivedFromRecycler { get; set; }
         public Deliverygetinrequestsdto? delivery { get; set; } // we will convert it to dto later
     }
 }

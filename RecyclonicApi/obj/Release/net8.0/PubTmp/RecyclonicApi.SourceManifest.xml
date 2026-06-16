@@ -1,4 +1,4 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <sitemanifest>
-  <IisApp path="D:\Recyclonic_Web_Backend\RecyclonicApi\obj\Release\net8.0\PubTmp\Out\" />
+  <IisApp path="D:\Recyclonic-Project\RecyclonicApi\obj\Release\net8.0\PubTmp\Out\" />
 </sitemanifest>
